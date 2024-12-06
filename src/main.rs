@@ -6,6 +6,8 @@ use std::time::Instant;
 use solutions::day1;
 use solutions::day3;
 use solutions::day4;
+use solutions::day5;
+use solutions::day6;
 
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -17,6 +19,10 @@ fn main() -> std::io::Result<()> {
       "3-2" => day3::part2(), 
       "4-1" => day4::part1(), 
       "4-2" => day4::part2(), 
+      "5-1" => day5::part1(), 
+      "5-2" => day5::part2(), 
+      "6-1" => day6::part1(), 
+      "6-2" => day6::part2(), 
       _ => todo!()  
     }; 
     println!("{:?}", start.elapsed());
