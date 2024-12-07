@@ -121,6 +121,7 @@ fn filter_lines(reader: BufReader<File>) -> Vec<String> {
 }
 
 
+
 pub fn part2() -> std::io::Result<()> {
     let file = File::open("./src/inputs/5.txt")?;
     let reader = BufReader::new(file);
@@ -153,50 +154,24 @@ pub fn part2() -> std::io::Result<()> {
             let mut row: Vec<i32> = vec![];
             for n in split {
                let number = n.parse::<i32>().unwrap();
+               match rules_map.get(&number) {
+                  Some(_v) => {}
+                  None => {rules_map.insert(number, Vec::new());}
+               }
                row.push(number);
             }
             grid.push(row);
         }
     }
 
-    let mut m = 0;
-
-    println!("{:?}", rules_map);
-
-    for mut updates in grid {
-        let mut row: Vec<i32> = vec![];
-        let mut rules = rules_map.clone();
-        while row.len() != updates.len() {
-            for (j, page) in updates.iter().enumerate() {
-                match rules.get_mut(&page) {
-                    Some(r) => {
-                        for i in 0..r.len() {
-                           if row.contains(&r[i]) || !updates.contains(&r[i]) {
-                                r.remove(i);
-                                break;
-                           } 
-                        }
-                        if r.len() == 0 {
-                            if !row.contains(page) {
-                                row.push(*page);
-                            }
-                        }
-                    }
-                    None => {
-                        if !row.contains(page) {
-                            row.push(*page);
-                        }
-                    } 
-                }
-            }
-        }
+    for updates in grid {
+        let mut row = updates;
+        row.sort_by(| a, b | rules_map.get(a).unwrap().len().cmp(&rules_map.get(b).unwrap().len()));
         counter += row[row.len()/2];
-        m = std::cmp::max(row.len(), m);
     }
 
 
     println!("{:?}", counter);
-    println!("{:?}", m);
 
     return Ok(());
 }
