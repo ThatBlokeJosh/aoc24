@@ -10,6 +10,7 @@ use solutions::day5;
 use solutions::day6;
 use solutions::day7;
 use solutions::day8;
+use solutions::day9;
 
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -29,6 +30,8 @@ fn main() -> std::io::Result<()> {
       "7-2" => day7::part2(), 
       "8-1" => day8::part1(), 
       "8-2" => day8::part2(), 
+      "9-1" => day9::part1(), 
+      "9-2" => day9::part2(), 
       _ => todo!()  
     }; 
     println!("{:?}", start.elapsed());
