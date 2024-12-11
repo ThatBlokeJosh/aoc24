@@ -4,6 +4,8 @@ use std::env;
 use std::time::Instant;
 
 use solutions::day1;
+use solutions::day10;
+use solutions::day11;
 use solutions::day3;
 use solutions::day4;
 use solutions::day5;
@@ -32,6 +34,10 @@ fn main() -> std::io::Result<()> {
       "8-2" => day8::part2(), 
       "9-1" => day9::part1(), 
       "9-2" => day9::part2(), 
+      "10-1" => day10::part1(), 
+      "10-2" => day10::part2(), 
+      "11-1" => day11::part1(), 
+      "11-2" => day11::part2(), 
       _ => todo!()  
     }; 
     println!("{:?}", start.elapsed());
