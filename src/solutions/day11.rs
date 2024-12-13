@@ -51,7 +51,7 @@ fn blink(number: u64, depth: u8, cache: &mut HashMap<(u64, u8), u64>) -> u64 {
 
 pub fn part2() -> std::io::Result<()> {
     let line = fs::read_to_string("./src/inputs/11.txt").unwrap();
-    let numbers: Vec<u64> = line.trim().split(" ").map(|n| n.parse::<u64>().unwrap()).collect();
+    let numbers = line.trim().split(" ").map(|n| n.parse::<u64>().unwrap());
 
     let mut counter = 0;
     let mut cache: HashMap<(u64, u8), u64> = HashMap::new();
