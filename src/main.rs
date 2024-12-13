@@ -1,4 +1,5 @@
 mod solutions;
+mod visualize;
 use std::env;
 use std::time::Instant;
 
@@ -43,6 +44,7 @@ fn main() -> std::io::Result<()> {
       "12-2" => day12::part2(), 
       "13-1" => day13::part1(), 
       "13-2" => day13::part2(), 
+      "plot" => Ok(visualize::graph::draw()), 
       _ => todo!()  
     }; 
     println!("{:?}", start.elapsed());
