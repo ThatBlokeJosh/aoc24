@@ -1,5 +1,4 @@
 mod solutions;
-mod utils;
 use std::env;
 use std::time::Instant;
 
