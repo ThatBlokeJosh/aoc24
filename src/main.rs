@@ -3,18 +3,7 @@ mod visualize;
 use std::env;
 use std::time::Instant;
 
-use solutions::day1;
-use solutions::day10;
-use solutions::day11;
-use solutions::day12;
-use solutions::day13;
-use solutions::day3;
-use solutions::day4;
-use solutions::day5;
-use solutions::day6;
-use solutions::day7;
-use solutions::day8;
-use solutions::day9;
+use solutions::*;
 
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -44,6 +33,8 @@ fn main() -> std::io::Result<()> {
       "12-2" => day12::part2(), 
       "13-1" => day13::part1(), 
       "13-2" => day13::part2(), 
+      "14-1" => day14::part1(), 
+      "14-2" => day14::part2(), 
       "plot" => Ok(visualize::graph::draw()), 
       _ => todo!()  
     }; 

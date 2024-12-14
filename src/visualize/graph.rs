@@ -44,8 +44,8 @@ pub fn draw() {
       points.push((day as f32, duration.as_micros() as f32));
     }
   }
-  println!("\n{:-^151}", "Times");
-  Chart::new(300, 100, 0.0, 50.0)
+  println!("\n{:-^100}", "Times");
+  Chart::new(200, 100, 0.0, 50.0)
     .linecolorplot(&Shape::Bars(&points), RGB8{r: 0, g: 255, b: 0})
     .nice();
 
