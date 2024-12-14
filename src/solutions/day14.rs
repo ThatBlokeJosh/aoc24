@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use std::fs::File;
+use std::i32;
 use std::io::{BufRead, BufReader};
 use regex::Regex;
 
@@ -35,24 +35,23 @@ fn draw(robots: &Vec<Robot>, bounds: Cartesian) {
 
 }
 
-fn is_tree(robots: Vec<Robot>) -> bool {
-    let mut seen: HashMap<i32, i32> = HashMap::new();
-    for robot in robots {
-        match seen.get_mut(&robot.p.y) {
-            Some(y) => {
-                *y += 1;
-            }
-            None => {
-                seen.insert(robot.p.y, 1);
-            } 
-        }
+fn quads(robot: Robot, bounds: Cartesian, quadrants: &mut [i32; 4]) {
+    let halfx = bounds.x/2;
+    let halfy = bounds.y/2;
+
+    if robot.p.x == halfx || robot.p.y == halfy {
+        return;
     }
-    for (y, count) in seen {
-       if y + 1 != count {
-            return false;
-       } 
+    
+    if robot.p.x > halfx && robot.p.y < halfy {
+       quadrants[1] += 1;
+    } else if robot.p.x < halfx && robot.p.y > halfy {
+       quadrants[2] += 1;
+    } else if robot.p.x > halfx && robot.p.y > halfy {
+       quadrants[3] += 1;
+    } else {
+        quadrants[0] += 1;
     }
-    return true;
 }
 
 pub fn part1() -> std::io::Result<()> {
@@ -86,22 +85,7 @@ pub fn part1() -> std::io::Result<()> {
     let mut quadrants: [i32; 4] = [0; 4];
 
     for robot in &robots {
-        let halfx = bounds.x/2;
-        let halfy = bounds.y/2;
-
-        if robot.p.x == halfx || robot.p.y == halfy {
-            continue;
-        }
-        
-        if robot.p.x > halfx && robot.p.y < halfy {
-           quadrants[1] += 1;
-        } else if robot.p.x < halfx && robot.p.y > halfy {
-           quadrants[2] += 1;
-        } else if robot.p.x > halfx && robot.p.y > halfy {
-           quadrants[3] += 1;
-        } else {
-            quadrants[0] += 1;
-        }
+        quads(*robot, bounds, &mut quadrants);
     }
 
     for q in quadrants {
@@ -120,7 +104,6 @@ pub fn part2() -> std::io::Result<()> {
     let file = File::open("./src/inputs/14.txt")?;
     let reader = BufReader::new(file);
 
-    let mut counter = 1;
     let rexp = Regex::new(r"p[=](?<px>[-]?\d+),(?<py>[-]?\d+) v[=](?<vx>[-]?\d+),(?<vy>[-]?\d+)").unwrap();
 
     let mut robots: Vec<Robot> = vec![];
@@ -138,13 +121,23 @@ pub fn part2() -> std::io::Result<()> {
         }
     }
 
+    let mut security = i32::MAX;
+    let mut index = 0;
+
     for i in 0..10000 {
-        println!("\n{:?}\n", i);
-        draw(&robots, bounds);
+        let mut quadrants: [i32; 4] = [0; 4];
         for robot in robots.iter_mut() {
            second(robot, bounds); 
+           quads(*robot, bounds, &mut quadrants);
+        }
+        let factor = quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3];
+        if security > factor {
+            security = factor;
+            index = i + 1;
         }
     }
+
+    println!("{:?}", index);
 
     return Ok(());
 }
