@@ -1,3 +1,5 @@
+use std::process::Command;
+use std::{thread, time};
 use std::{char, usize};
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -138,7 +140,7 @@ pub fn part1() -> std::io::Result<()> {
             }    
         _ => {}
        } 
-    }
+    } 
 
     println!("{:?}", counter);
 
@@ -187,7 +189,6 @@ fn push2(direction: &Direction, coords: &Cartesian, grid: &mut Grid<Entry2>, ign
                                 return false;
                             }
                         }
-                        grid.swap(((lookahead.y + val.1).try_into().unwrap(), (lookahead.x + val.0).try_into().unwrap()), (lookahead.y.try_into().unwrap(), lookahead.x.try_into().unwrap()));
                         return true;
                     } else {
                         return false;
@@ -201,7 +202,6 @@ fn push2(direction: &Direction, coords: &Cartesian, grid: &mut Grid<Entry2>, ign
                                 return false;
                             }
                         }
-                        grid.swap(((lookahead.y + val.1).try_into().unwrap(), (lookahead.x + val.0).try_into().unwrap()), (lookahead.y.try_into().unwrap(), lookahead.x.try_into().unwrap()));
                         return true;
                     } else {
                         return false;
@@ -217,10 +217,40 @@ fn push2(direction: &Direction, coords: &Cartesian, grid: &mut Grid<Entry2>, ign
     return false;
 }
 
+fn push2move(direction: &Direction, coords: &Cartesian, grid: &mut Grid<Entry2>, ignore: bool) {
+    let val = direction.value();
+    let lookahead = Cartesian{y: coords.y + val.1, x: coords.x + val.0};
+    match grid.get(lookahead.y, lookahead.x) {
+        Some(e) => {
+            match e {
+                Entry2::BoxLeft => {
+                    push2move(direction, &lookahead, grid, false);
+                    let right = Cartesian{x: coords.x + 1, y: coords.y};
+                    if val.1 != 0 && !ignore {
+                        push2move(direction, &right, grid, true);
+                    }
+                    grid.swap(((lookahead.y + val.1).try_into().unwrap(), (lookahead.x + val.0).try_into().unwrap()), (lookahead.y.try_into().unwrap(), lookahead.x.try_into().unwrap()));
+                } 
+                Entry2::BoxRight => {
+                    push2move(direction, &lookahead, grid, false);
+                    let left = Cartesian{x: coords.x - 1, y: coords.y};
+                    if val.1 != 0 && !ignore {
+                        push2move(direction, &left, grid, true);
+                    }
+                    grid.swap(((lookahead.y + val.1).try_into().unwrap(), (lookahead.x + val.0).try_into().unwrap()), (lookahead.y.try_into().unwrap(), lookahead.x.try_into().unwrap()));
+                } 
+                Entry2::Wall | Entry2::Empty => {}
+            }
+        }
+        None => {} 
+    }
+}
+
 fn move_robot2(direction: &Direction, robot: &mut Cartesian, grid: &mut Grid<Entry2>) {
     let val = direction.value();
     let lookahead = Cartesian{y: robot.y as i8 + val.1, x: robot.x as i8 + val.0};
     if push2(direction, robot, grid, false) {
+        push2move(direction, robot, grid, false);
         *robot = lookahead;
     }
 }
@@ -267,9 +297,7 @@ pub fn part2() -> std::io::Result<()> {
     }
 
     for (i, dir) in directions.iter().enumerate() {
-        println!("\n{:?}\n", i);
         move_robot2(dir, &mut robot, &mut grid);    
-        visualize2(&grid, &robot);
     }
 
     let mut counter = 0;
