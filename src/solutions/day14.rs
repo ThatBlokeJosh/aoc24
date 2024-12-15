@@ -124,7 +124,7 @@ pub fn part2() -> std::io::Result<()> {
     let mut security = i32::MAX;
     let mut index = 0;
 
-    for i in 0..10000 {
+    for i in 0..bounds.x*bounds.y {
         let mut quadrants: [i32; 4] = [0; 4];
         for robot in robots.iter_mut() {
            second(robot, bounds); 
