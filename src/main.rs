@@ -37,6 +37,10 @@ fn main() -> std::io::Result<()> {
       "14-2" => day14::part2(), 
       "15-1" => day15::part1(), 
       "15-2" => day15::part2(), 
+      "16-1" => day16::part1(), 
+      "16-2" => day16::part2(), 
+      "17-1" => day17::part1(), 
+      "17-2" => day17::part2(), 
       "plot" => Ok(visualize::graph::draw()), 
       _ => todo!()  
     }; 
