@@ -28,7 +28,7 @@ pub fn part1() -> std::io::Result<()> {
         distance += cmp::max(left[i], right[i]) - cmp::min(left[i], right[i]);
     }
 
-    println!("{distance:?}");
+    println!("{:?}", distance);
 
     Ok(())
 }

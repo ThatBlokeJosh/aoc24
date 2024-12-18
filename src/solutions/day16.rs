@@ -5,7 +5,7 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader};
-use std::{usize, vec};
+use std::{path, usize, vec};
 
 #[derive(Debug, Clone, Copy)]
 enum Entry {
@@ -25,6 +25,7 @@ impl Cartesian {
         g += pg;
         let h = heuristic(*self, *target);
         Node {
+            path: vec![],
             pos: *self,
             g,
             h,
@@ -88,8 +89,9 @@ fn visualize(grid: &Grid<Entry>, path: Vec<Cartesian>) {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 struct Node {
+    path: Vec<Cartesian>,
     pos: Cartesian,
     dir: Direction,
     f: i64,
@@ -142,23 +144,23 @@ fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
     -1
 }
 
-fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
+fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> usize {
     let mut open_list: BinaryHeap<Node> = BinaryHeap::new();
     open_list.push(start.to_node(&end, 0, -1, Direction::Right));
     let mut lowest_cost: HashMap<Cartesian, i64> = HashMap::new();
     let mut best_cost = i64::MAX;
-    let mut paths: HashMap<Node, Vec<(Node, i64)>> = HashMap::new();
-    paths.insert(
-        *open_list.peek().unwrap(),
-        vec![(*open_list.peek().unwrap(), 0)],
-    );
+    let mut unique: HashSet<Cartesian> = HashSet::new();
 
     while !open_list.is_empty() {
         let curr = open_list.pop().unwrap();
         let pos = curr.pos;
 
-        if lowest_cost.contains_key(&pos) && *lowest_cost.get(&pos).unwrap() < curr.g {
-            continue;
+        if let Some(cost) = lowest_cost.get(&pos) {
+            if *cost / 1000 + 1 < curr.g / 1000 {
+                continue;
+            } else if *cost % 1000 < curr.g % 1000 {
+                continue;
+            }
         }
         lowest_cost.insert(pos, curr.g);
 
@@ -167,16 +169,9 @@ fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
                 break;
             }
             best_cost = curr.g;
-            let mut counter = 0;
-            for point in paths.get(&curr).unwrap() {
-                let paths_to_p = paths.get(&point.0).unwrap();
-                for pp in paths_to_p {
-                    if pp.1 + point.1 == best_cost {
-                        counter += 1;
-                    }
-                }
+            for c in &curr.path {
+                unique.insert(*c);
             }
-            println!("{counter:?}");
         }
         for (i, d) in curr.dir.rotate().iter().enumerate() {
             let dir = d.value();
@@ -188,10 +183,9 @@ fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
             if let Some(entry) = grid.get(lookahead.y, lookahead.x) {
                 match entry {
                     Entry::Empty => {
-                        let node = lookahead.to_node(&end, i, curr.g, *d);
-                        let mut prev_path = paths.get(&curr).unwrap().clone();
-                        prev_path.push((node, curr.g));
-                        paths.insert(node, prev_path.clone());
+                        let mut node = lookahead.to_node(&end, i, curr.g, *d);
+                        node.path = curr.path.clone();
+                        node.path.push(pos);
                         open_list.push(node);
                     }
                     Entry::Wall => {}
@@ -199,7 +193,7 @@ fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
             }
         }
     }
-    -1
+    return unique.len() + 1;
 }
 
 pub fn part1() -> std::io::Result<()> {
@@ -278,27 +272,9 @@ pub fn part2() -> std::io::Result<()> {
         grid.push_row(row);
     }
 
-    let mut counter = 0;
-    let length = astar(start, end, &grid);
+    let counter = astar2(start, end, &grid);
 
-    for ((row, col), entry) in grid.indexed_iter() {
-        match entry {
-            Entry::Wall => {}
-            Entry::Empty => {
-                let p = Cartesian {
-                    x: col as i64,
-                    y: row as i64,
-                };
-                let sp = astar(start, p, &grid);
-                let pe = astar(end, p, &grid);
-                if sp + pe == length || sp + pe - 1000 == length {
-                    counter += 1;
-                }
-            }
-        }
-    }
-
-    println!("{counter:?}");
+    println!("{:?}", counter);
 
     Ok(())
 }
