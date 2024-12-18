@@ -1,7 +1,6 @@
+use regex::Regex;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::collections::HashMap;
-use regex::Regex;
 
 pub fn part1() -> std::io::Result<()> {
     let file = File::open("./src/inputs/3.txt")?;
@@ -10,7 +9,7 @@ pub fn part1() -> std::io::Result<()> {
 
     let mut res = 0;
 
-    for line in reader.lines()  {
+    for line in reader.lines() {
         let hay = line.unwrap();
         for c in re.captures_iter(&hay) {
             let x = &c["n1"].parse::<i32>().unwrap();
@@ -19,9 +18,9 @@ pub fn part1() -> std::io::Result<()> {
         }
     }
 
-    println!("{:?}", res);
+    println!("{res:?}");
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn part2() -> std::io::Result<()> {
@@ -33,29 +32,29 @@ pub fn part2() -> std::io::Result<()> {
 
     let mut do_bool = true;
 
-    for line in reader.lines()  {
+    for line in reader.lines() {
         let hay = line.unwrap();
         for c in re.captures_iter(&hay) {
             match (c.name("dont"), c.name("do"), c.name("n"), c.name("n2")) {
                 (None, None, Some(a), Some(b)) => {
                     let x = a.as_str().parse::<i32>().unwrap();
                     let y = b.as_str().parse::<i32>().unwrap();
-                    if (do_bool) {
+                    if do_bool {
                         res += x * y;
                     }
-                },
+                }
                 (Some(dont), None, None, None) => {
-                    do_bool = false
-                },
+                    do_bool = false;
+                }
                 (None, Some(do_cap), None, None) => {
-                    do_bool = true
-                },
+                    do_bool = true;
+                }
                 _ => {}
             };
         }
     }
 
-    println!("{:?}", res);
+    println!("{res:?}");
 
-    return Ok(());
+    Ok(())
 }

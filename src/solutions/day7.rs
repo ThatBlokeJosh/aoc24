@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-fn concat(a: u64, b: u64) -> u64 {
+const fn concat(a: u64, b: u64) -> u64 {
     a * 10u64.pow(b.ilog10() + 1) + b
 }
 
@@ -11,9 +11,11 @@ pub fn dfs(numbers: &Vec<u64>, index: usize, target: u64, total: u64) -> bool {
     }
 
     let add = dfs(numbers, index + 1, target, total + numbers[index]);
-    if add {return true;}
-    let mult = dfs(numbers, index + 1, target, total * numbers[index]); 
-    return mult;
+    if add {
+        return true;
+    }
+
+    dfs(numbers, index + 1, target, total * numbers[index])
 }
 
 pub fn dfs_w_con(numbers: &Vec<u64>, index: usize, target: u64, total: u64) -> bool {
@@ -22,13 +24,16 @@ pub fn dfs_w_con(numbers: &Vec<u64>, index: usize, target: u64, total: u64) -> b
     }
 
     let add = dfs_w_con(numbers, index + 1, target, total + numbers[index]);
-    if add {return true;}
+    if add {
+        return true;
+    }
 
-    let mult = dfs_w_con(numbers, index + 1, target, total * numbers[index]); 
-    if mult {return true;}
+    let mult = dfs_w_con(numbers, index + 1, target, total * numbers[index]);
+    if mult {
+        return true;
+    }
 
-    let con = dfs_w_con(numbers, index + 1, target, concat(total, numbers[index]));
-    return con;
+    dfs_w_con(numbers, index + 1, target, concat(total, numbers[index]))
 }
 
 pub fn part1() -> std::io::Result<()> {
@@ -41,14 +46,21 @@ pub fn part1() -> std::io::Result<()> {
         let content = line.unwrap();
         let split = content.split_once(": ").unwrap();
         let target = split.0.parse::<u64>().unwrap();
-        let numbers: Vec<u64> = split.1.split(" ").map(|x| x.parse::<u64>().unwrap()).collect();
-        counter += if dfs(&numbers, 1, target, numbers[0]) {target} else {0};
+        let numbers: Vec<u64> = split
+            .1
+            .split(' ')
+            .map(|x| x.parse::<u64>().unwrap())
+            .collect();
+        counter += if dfs(&numbers, 1, target, numbers[0]) {
+            target
+        } else {
+            0
+        };
     }
 
+    println!("{counter:?}");
 
-    println!("{:?}", counter);
-
-    return Ok(());
+    Ok(())
 }
 
 pub fn part2() -> std::io::Result<()> {
@@ -61,12 +73,19 @@ pub fn part2() -> std::io::Result<()> {
         let content = line.unwrap();
         let split = content.split_once(": ").unwrap();
         let target = split.0.parse::<u64>().unwrap();
-        let numbers: Vec<u64> = split.1.split(" ").map(|x| x.parse::<u64>().unwrap()).collect();
-        counter += if dfs_w_con(&numbers, 1, target, numbers[0]) {target} else {0};
+        let numbers: Vec<u64> = split
+            .1
+            .split(' ')
+            .map(|x| x.parse::<u64>().unwrap())
+            .collect();
+        counter += if dfs_w_con(&numbers, 1, target, numbers[0]) {
+            target
+        } else {
+            0
+        };
     }
 
+    println!("{counter:?}");
 
-    println!("{:?}", counter);
-
-    return Ok(());
+    Ok(())
 }

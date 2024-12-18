@@ -1,12 +1,11 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 use std::fs::{self};
-use std::io::{BufRead, BufReader};
 use std::usize;
 
 #[derive(Debug, Copy, Clone)]
 enum Block {
     Data(u64),
-    Empty, 
+    Empty,
 }
 
 pub fn part1() -> std::io::Result<()> {
@@ -18,34 +17,35 @@ pub fn part1() -> std::io::Result<()> {
     let mut queue: VecDeque<usize> = VecDeque::new();
 
     for (i, d) in disk.enumerate() {
-        if (i % 2 == 0) {
+        if i % 2 == 0 {
             for _j in 0..d {
-               memory.push(Block::Data(current_pos)); 
+                memory.push(Block::Data(current_pos));
             }
             current_pos += 1;
         } else {
             for _j in 0..d {
-               memory.push(Block::Empty); 
-               queue.push_back(memory.len() - 1);
+                memory.push(Block::Empty);
+                queue.push_back(memory.len() - 1);
             }
         }
     }
 
     loop {
-        let last = memory.pop().unwrap();    
-        match last {
-            Block::Empty => {continue;}
-            _ => {}
+        let last = memory.pop().unwrap();
+        if matches!(last, Block::Empty) {
+            continue;
         }
-        match queue.get(0) {
+        match queue.front() {
             Some(i) => {
                 if *i >= memory.len() {
                     memory.push(last);
                     break;
                 }
                 memory[*i] = last;
-            }        
-            None => {break;}
+            }
+            None => {
+                break;
+            }
         }
         queue.pop_front();
     }
@@ -53,15 +53,14 @@ pub fn part1() -> std::io::Result<()> {
     let mut counter = 0;
 
     for (i, d) in memory.iter().enumerate() {
-        match d {
-            Block::Data(n) => {counter += i as u64 * n}
-            _ => {} 
+        if let Block::Data(n) = d {
+            counter += i as u64 * n
         }
     }
 
-    println!("{:?}", counter);
+    println!("{counter:?}");
 
-    return Ok(());
+    Ok(())
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -70,7 +69,6 @@ struct File {
     block: Block,
     pos: usize,
 }
-
 
 #[derive(Debug, Copy, Clone)]
 struct Empty {
@@ -89,16 +87,23 @@ pub fn part2() -> std::io::Result<()> {
 
     for (i, d) in disk.enumerate() {
         if i % 2 == 0 {
-            let f = File{length: d as u64, block: Block::Data(current_pos), pos: memory.len()};
+            let f = File {
+                length: u64::from(d),
+                block: Block::Data(current_pos),
+                pos: memory.len(),
+            };
             files.push(f);
             for _j in 0..d {
-               memory.push(Block::Data(current_pos)); 
+                memory.push(Block::Data(current_pos));
             }
             current_pos += 1;
         } else {
-            let f = Empty{length: d as u64, pos: memory.len()};
+            let f = Empty {
+                length: u64::from(d),
+                pos: memory.len(),
+            };
             for _j in 0..d {
-               memory.push(Block::Empty); 
+                memory.push(Block::Empty);
             }
             queue.push(f);
         }
@@ -109,12 +114,16 @@ pub fn part2() -> std::io::Result<()> {
     'a: loop {
         let last;
         match files.pop() {
-            Some(l) => {last = l;} 
-            None => {break;}
+            Some(l) => {
+                last = l;
+            }
+            None => {
+                break;
+            }
         }
-       
-        for space in queue.iter_mut() {
-            if (space.pos > last.pos) {
+
+        for space in &mut queue {
+            if space.pos > last.pos {
                 break;
             }
             if space.length >= last.length {
@@ -124,25 +133,22 @@ pub fn part2() -> std::io::Result<()> {
                 space.pos += last.length as usize;
 
                 for i in 0..new_file.length {
-                    memory[new_file.pos + i as usize] = new_file.block; 
+                    memory[new_file.pos + i as usize] = new_file.block;
                     memory[last.pos + i as usize] = Block::Empty;
                 }
 
                 break;
-            } 
+            }
         }
     }
-
-
 
     for (i, d) in memory.iter().enumerate() {
-        match d {
-            Block::Data(n) => {counter += i as u64 * n}
-            _ => {} 
+        if let Block::Data(n) = d {
+            counter += i as u64 * n
         }
     }
 
-    println!("{:?}", counter);
+    println!("{counter:?}");
 
-    return Ok(());
+    Ok(())
 }

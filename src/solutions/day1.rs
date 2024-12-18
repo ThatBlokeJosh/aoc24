@@ -1,7 +1,7 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use std::cmp;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 pub fn part1() -> std::io::Result<()> {
     let file = File::open("./src/inputs/1.txt")?;
@@ -12,7 +12,7 @@ pub fn part1() -> std::io::Result<()> {
     let mut left: Vec<i32> = Vec::new();
     let mut right: Vec<i32> = Vec::new();
 
-    for line in reader.lines()  {
+    for line in reader.lines() {
         let unwrapped = line.unwrap();
         let split: Vec<&str> = unwrapped.split("   ").collect();
         let x = split[0].parse::<i32>().unwrap();
@@ -21,16 +21,16 @@ pub fn part1() -> std::io::Result<()> {
         right.push(y);
     }
 
-    left.sort();
-    right.sort();
+    left.sort_unstable();
+    right.sort_unstable();
 
-    for i in 0..left.len()  {
+    for i in 0..left.len() {
         distance += cmp::max(left[i], right[i]) - cmp::min(left[i], right[i]);
     }
 
-    println!("{:?}", distance);
+    println!("{distance:?}");
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn part2() -> std::io::Result<()> {
@@ -42,7 +42,7 @@ pub fn part2() -> std::io::Result<()> {
     let mut left: Vec<i32> = Vec::new();
     let mut right: HashMap<i32, i32> = HashMap::new();
 
-    for line in reader.lines()  {
+    for line in reader.lines() {
         let unwrapped = line.unwrap();
         let split: Vec<&str> = unwrapped.split("   ").collect();
         let x = split[0].parse::<i32>().unwrap();
@@ -51,12 +51,12 @@ pub fn part2() -> std::io::Result<()> {
         *right.entry(y).or_insert(0) += 1;
     }
 
-    for i in 0..left.len()  {
+    for i in 0..left.len() {
         let x = left[i];
         distance += x * if right.contains_key(&x) { right[&x] } else { 0 };
     }
 
-    println!("{:?}", distance);
+    println!("{distance:?}");
 
-    return Ok(());
+    Ok(())
 }

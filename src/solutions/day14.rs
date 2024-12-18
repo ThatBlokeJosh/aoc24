@@ -1,7 +1,7 @@
+use regex::Regex;
 use std::fs::File;
 use std::i32;
 use std::io::{BufRead, BufReader};
-use regex::Regex;
 
 #[derive(Debug, Copy, Clone)]
 struct Cartesian {
@@ -16,39 +16,38 @@ struct Robot {
 }
 
 fn second(robot: &mut Robot, bounds: Cartesian) {
-    robot.p.x = (robot.p.x + robot.v.x).rem_euclid(bounds.x); 
-    robot.p.y = (robot.p.y + robot.v.y).rem_euclid(bounds.y); 
+    robot.p.x = (robot.p.x + robot.v.x).rem_euclid(bounds.x);
+    robot.p.y = (robot.p.y + robot.v.y).rem_euclid(bounds.y);
 }
 
 fn draw(robots: &Vec<Robot>, bounds: Cartesian) {
     for i in 0..bounds.y {
-       for j in 0..bounds.x {
+        for j in 0..bounds.x {
             let robot: Vec<&Robot> = robots.iter().filter(|r| r.p.x == j && r.p.y == i).collect();
-            if robot.len() > 0 {
+            if !robot.is_empty() {
                 print!("■");
             } else {
                 print!(".");
             }
-       }
-       println!("");
+        }
+        println!();
     }
-
 }
 
 fn quads(robot: Robot, bounds: Cartesian, quadrants: &mut [i32; 4]) {
-    let halfx = bounds.x/2;
-    let halfy = bounds.y/2;
+    let halfx = bounds.x / 2;
+    let halfy = bounds.y / 2;
 
     if robot.p.x == halfx || robot.p.y == halfy {
         return;
     }
-    
+
     if robot.p.x > halfx && robot.p.y < halfy {
-       quadrants[1] += 1;
+        quadrants[1] += 1;
     } else if robot.p.x < halfx && robot.p.y > halfy {
-       quadrants[2] += 1;
+        quadrants[2] += 1;
     } else if robot.p.x > halfx && robot.p.y > halfy {
-       quadrants[3] += 1;
+        quadrants[3] += 1;
     } else {
         quadrants[0] += 1;
     }
@@ -59,26 +58,29 @@ pub fn part1() -> std::io::Result<()> {
     let reader = BufReader::new(file);
 
     let mut counter = 1;
-    let rexp = Regex::new(r"p[=](?<px>[-]?\d+),(?<py>[-]?\d+) v[=](?<vx>[-]?\d+),(?<vy>[-]?\d+)").unwrap();
+    let rexp =
+        Regex::new(r"p[=](?<px>[-]?\d+),(?<py>[-]?\d+) v[=](?<vx>[-]?\d+),(?<vy>[-]?\d+)").unwrap();
 
     let mut robots: Vec<Robot> = vec![];
-    let bounds: Cartesian = Cartesian{x: 101, y: 103};
+    let bounds: Cartesian = Cartesian { x: 101, y: 103 };
 
-    for line in reader.lines()  {
+    for line in reader.lines() {
         let content = line.unwrap();
-        for c in rexp.captures(&content).iter() {
+        for c in &rexp.captures(&content) {
             let px = &c["px"].parse::<i32>().unwrap();
             let py = &c["py"].parse::<i32>().unwrap();
             let vx = &c["vx"].parse::<i32>().unwrap();
             let vy = &c["vy"].parse::<i32>().unwrap();
-            robots.push(Robot{p: Cartesian{x: *px, y: *py}, v: Cartesian{x: *vx, y: *vy}});
-            
+            robots.push(Robot {
+                p: Cartesian { x: *px, y: *py },
+                v: Cartesian { x: *vx, y: *vy },
+            });
         }
     }
 
     for _i in 0..100 {
-        for robot in robots.iter_mut() {
-           second(robot, bounds); 
+        for robot in &mut robots {
+            second(robot, bounds);
         }
     }
 
@@ -95,40 +97,43 @@ pub fn part1() -> std::io::Result<()> {
         counter *= q;
     }
 
-    println!("{:?}", counter);
+    println!("{counter:?}");
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn part2() -> std::io::Result<()> {
     let file = File::open("./src/inputs/14.txt")?;
     let reader = BufReader::new(file);
 
-    let rexp = Regex::new(r"p[=](?<px>[-]?\d+),(?<py>[-]?\d+) v[=](?<vx>[-]?\d+),(?<vy>[-]?\d+)").unwrap();
+    let rexp =
+        Regex::new(r"p[=](?<px>[-]?\d+),(?<py>[-]?\d+) v[=](?<vx>[-]?\d+),(?<vy>[-]?\d+)").unwrap();
 
     let mut robots: Vec<Robot> = vec![];
-    let bounds: Cartesian = Cartesian{x: 101, y: 103};
+    let bounds: Cartesian = Cartesian { x: 101, y: 103 };
 
-    for line in reader.lines()  {
+    for line in reader.lines() {
         let content = line.unwrap();
-        for c in rexp.captures(&content).iter() {
+        for c in &rexp.captures(&content) {
             let px = &c["px"].parse::<i32>().unwrap();
             let py = &c["py"].parse::<i32>().unwrap();
             let vx = &c["vx"].parse::<i32>().unwrap();
             let vy = &c["vy"].parse::<i32>().unwrap();
-            robots.push(Robot{p: Cartesian{x: *px, y: *py}, v: Cartesian{x: *vx, y: *vy}});
-            
+            robots.push(Robot {
+                p: Cartesian { x: *px, y: *py },
+                v: Cartesian { x: *vx, y: *vy },
+            });
         }
     }
 
     let mut security = i32::MAX;
     let mut index = 0;
 
-    for i in 0..bounds.x*bounds.y {
+    for i in 0..bounds.x * bounds.y {
         let mut quadrants: [i32; 4] = [0; 4];
-        for robot in robots.iter_mut() {
-           second(robot, bounds); 
-           quads(*robot, bounds, &mut quadrants);
+        for robot in &mut robots {
+            second(robot, bounds);
+            quads(*robot, bounds, &mut quadrants);
         }
         let factor = quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3];
         if security > factor {
@@ -137,7 +142,7 @@ pub fn part2() -> std::io::Result<()> {
         }
     }
 
-    println!("{:?}", index);
+    println!("{index:?}");
 
-    return Ok(());
+    Ok(())
 }

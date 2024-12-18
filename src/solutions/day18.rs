@@ -1,10 +1,10 @@
+use grid::Grid;
+use regex::Regex;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet, VecDeque};
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader};
-use grid::Grid;
-use regex::Regex;
 use std::usize;
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -21,10 +21,16 @@ struct Cartesian {
 }
 
 impl Cartesian {
-    fn to_node(&self, target: &Cartesian, pg: i64, dir: Direction) -> Node {
+    const fn to_node(&self, target: &Self, pg: i64, dir: Direction) -> Node {
         let g = pg + 1;
         let h = heuristic(*self, *target);
-        return Node{pos: *self, g, h, f: g + h, dir};
+        Node {
+            pos: *self,
+            g,
+            h,
+            f: g + h,
+            dir,
+        }
     }
 }
 
@@ -36,39 +42,42 @@ enum Direction {
     Left,
 }
 
-
-fn heuristic(x: Cartesian, y: Cartesian) -> i64 {
-  return (y.x - x.x).abs() + (y.y - x.y).abs();
+const fn heuristic(x: Cartesian, y: Cartesian) -> i64 {
+    (y.x - x.x).abs() + (y.y - x.y).abs()
 }
 
 impl Direction {
-    fn value(&self) -> (i64, i64) {
+    const fn value(&self) -> (i64, i64) {
         match *self {
-            Direction::Up => (0, -1),
-            Direction::Down => (0, 1),
-            Direction::Right => (1, 0),
-            Direction::Left => (-1, 0),
+            Self::Up => (0, -1),
+            Self::Down => (0, 1),
+            Self::Right => (1, 0),
+            Self::Left => (-1, 0),
         }
     }
-    fn rotate(&self) -> [Direction; 3] {
+    const fn rotate(&self) -> [Self; 3] {
         match *self {
-            Direction::Up => [Direction::Up, Direction::Right, Direction::Left],
-            Direction::Down => [Direction::Down, Direction::Right, Direction::Left],
-            Direction::Left => [Direction::Left, Direction::Up, Direction::Down],
-            Direction::Right => [Direction::Right, Direction::Up, Direction::Down],
+            Self::Up => [Self::Up, Self::Right, Self::Left],
+            Self::Down => [Self::Down, Self::Right, Self::Left],
+            Self::Left => [Self::Left, Self::Up, Self::Down],
+            Self::Right => [Self::Right, Self::Up, Self::Down],
         }
     }
 }
 
 fn visualize(grid: &Grid<Entry>) {
-    for (_y, row) in grid.iter_rows().enumerate() {
-       for (_x, entry) in row.enumerate() {
+    for row in grid.iter_rows() {
+        for entry in row {
             match entry {
-                Entry::Wall => {print!("#")}
-                Entry::Empty => {print!(".")}
+                Entry::Wall => {
+                    print!("#")
+                }
+                Entry::Empty => {
+                    print!(".")
+                }
             }
-       } 
-        println!("");
+        }
+        println!();
     }
 }
 
@@ -84,7 +93,7 @@ struct Node {
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
         self.f.cmp(&other.f)
-    } 
+    }
 }
 
 impl PartialOrd for Node {
@@ -98,34 +107,33 @@ fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
     open_list.push(start.to_node(&end, -1, Direction::Right));
     let mut closed_list: HashSet<Cartesian> = HashSet::new();
     while !open_list.is_empty() {
-        let curr = open_list.pop().unwrap(); 
+        let curr = open_list.pop().unwrap();
         closed_list.insert(curr.pos);
         let pos = curr.pos;
         if end == pos {
             return curr.g;
         }
-        for (_i, d) in curr.dir.rotate().iter().enumerate() {
-            let dir = d.value(); 
-            let lookahead = Cartesian{x: pos.x + dir.0, y: pos.y + dir.1};
+        for d in &curr.dir.rotate() {
+            let dir = d.value();
+            let lookahead = Cartesian {
+                x: pos.x + dir.0,
+                y: pos.y + dir.1,
+            };
 
-            match grid.get(lookahead.y, lookahead.x) {
-                Some(entry) => {
-                    match entry {
-                        Entry::Empty => {
-                            if !closed_list.contains(&lookahead) {
-                                open_list.push(lookahead.to_node(&end, curr.g, *d));
-                            }
+            if let Some(entry) = grid.get(lookahead.y, lookahead.x) {
+                match entry {
+                    Entry::Empty => {
+                        if !closed_list.contains(&lookahead) {
+                            open_list.push(lookahead.to_node(&end, curr.g, *d));
                         }
-                        Entry::Wall => {}
                     }
+                    Entry::Wall => {}
                 }
-                None => {}
             }
         }
     }
-    return -1;
+    -1
 }
-
 
 pub fn part1() -> std::io::Result<()> {
     let file = File::open("./src/inputs/18.txt")?;
@@ -133,8 +141,11 @@ pub fn part1() -> std::io::Result<()> {
 
     let bounds = 71;
     let mut grid: Grid<Entry> = Grid::new(bounds as usize, bounds as usize);
-    let start: Cartesian = Cartesian{x: 0, y: 0};
-    let end: Cartesian = Cartesian{x: bounds - 1, y: bounds - 1};
+    let start: Cartesian = Cartesian { x: 0, y: 0 };
+    let end: Cartesian = Cartesian {
+        x: bounds - 1,
+        y: bounds - 1,
+    };
     let rex = Regex::new(r"(?<x>[-]?\d+),(?<y>[-]?\d+)").unwrap();
 
     for (i, lines) in reader.lines().enumerate() {
@@ -142,7 +153,7 @@ pub fn part1() -> std::io::Result<()> {
         if i == 1024 {
             break;
         }
-        for c in rex.captures(&content).iter() {
+        for c in &rex.captures(&content) {
             let x = &c["x"].parse::<i32>().unwrap();
             let y = &c["y"].parse::<i32>().unwrap();
             if let Some(entry) = grid.get_mut(*y, *x) {
@@ -153,7 +164,7 @@ pub fn part1() -> std::io::Result<()> {
 
     println!("{:?}", astar(start, end, &grid));
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn part2() -> std::io::Result<()> {
@@ -163,13 +174,16 @@ pub fn part2() -> std::io::Result<()> {
     let bounds = 71;
     let mut grid: Grid<Entry> = Grid::new(bounds as usize, bounds as usize);
     let mut bytes: VecDeque<(usize, usize)> = VecDeque::new();
-    let start: Cartesian = Cartesian{x: 0, y: 0};
-    let end: Cartesian = Cartesian{x: bounds - 1, y: bounds - 1};
+    let start: Cartesian = Cartesian { x: 0, y: 0 };
+    let end: Cartesian = Cartesian {
+        x: bounds - 1,
+        y: bounds - 1,
+    };
     let rex = Regex::new(r"(?<x>[-]?\d+),(?<y>[-]?\d+)").unwrap();
 
     for (i, lines) in reader.lines().enumerate() {
         let content = lines.unwrap();
-        for c in rex.captures(&content).iter() {
+        for c in &rex.captures(&content) {
             let x = c["x"].parse::<i32>().unwrap();
             let y = c["y"].parse::<i32>().unwrap();
             if i < 1024 {
@@ -193,5 +207,5 @@ pub fn part2() -> std::io::Result<()> {
         }
     }
 
-    return Ok(());
+    Ok(())
 }
