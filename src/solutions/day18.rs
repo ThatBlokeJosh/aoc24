@@ -1,11 +1,11 @@
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{BinaryHeap, HashSet, VecDeque};
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader};
-use grid::{grid, Grid};
+use grid::Grid;
 use regex::Regex;
-use std::{usize, vec};
+use std::usize;
 
 #[derive(Debug, Clone, Copy, Default)]
 enum Entry {
@@ -22,7 +22,7 @@ struct Cartesian {
 
 impl Cartesian {
     fn to_node(&self, target: &Cartesian, pg: i64, dir: Direction) -> Node {
-        let mut g = pg + 1;
+        let g = pg + 1;
         let h = heuristic(*self, *target);
         return Node{pos: *self, g, h, f: g + h, dir};
     }
@@ -61,8 +61,8 @@ impl Direction {
 }
 
 fn visualize(grid: &Grid<Entry>) {
-    for (y, row) in grid.iter_rows().enumerate() {
-       for (x, entry) in row.enumerate() {
+    for (_y, row) in grid.iter_rows().enumerate() {
+       for (_x, entry) in row.enumerate() {
             match entry {
                 Entry::Wall => {print!("#")}
                 Entry::Empty => {print!(".")}
@@ -104,7 +104,7 @@ fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
         if end == pos {
             return curr.g;
         }
-        for (i, d) in curr.dir.rotate().iter().enumerate() {
+        for (_i, d) in curr.dir.rotate().iter().enumerate() {
             let dir = d.value(); 
             let lookahead = Cartesian{x: pos.x + dir.0, y: pos.y + dir.1};
 
