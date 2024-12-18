@@ -115,8 +115,7 @@ fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
     let mut open_list: BinaryHeap<Node> = BinaryHeap::new();
     open_list.push(start.to_node(&end, 0, -1, Direction::Right));
     let mut closed_list: HashSet<Cartesian> = HashSet::new();
-    while !open_list.is_empty() {
-        let curr = open_list.pop().unwrap();
+    while let Some(curr) = open_list.pop() {
         closed_list.insert(curr.pos);
         let pos = curr.pos;
         if curr.h == 0 {
@@ -151,8 +150,7 @@ fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> usize {
     let mut best_cost = i64::MAX;
     let mut unique: HashSet<Cartesian> = HashSet::new();
 
-    while !open_list.is_empty() {
-        let curr = open_list.pop().unwrap();
+    while let Some(curr) = open_list.pop() {
         let pos = curr.pos;
 
         if let Some(cost) = lowest_cost.get(&pos) {
