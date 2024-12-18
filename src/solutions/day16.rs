@@ -1,4 +1,5 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader};
@@ -12,28 +13,22 @@ enum Entry {
     Empty,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Cartesian {
     x: i64,
     y: i64,
 }
 
-impl PartialEq for Cartesian {
-    fn eq(&self, other: &Cartesian) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-
 impl Cartesian {
-    fn to_node(&self, target: &Cartesian, i: usize, pg: i64) -> Node {
+    fn to_node(&self, target: &Cartesian, i: usize, pg: i64, dir: Direction) -> Node {
         let mut g = if i > 0 {1001} else {1};
         g += pg;
         let h = heuristic(*self, *target);
-        return Node{pos: *self, g, h, f: g + h};
+        return Node{pos: *self, g, h, f: g + h, dir};
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 enum Direction {
     Up,
     Down,
@@ -79,29 +74,39 @@ fn visualize(grid: &Grid<Entry>, path: Vec<Cartesian>) {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Node {
     pos: Cartesian,
+    dir: Direction,
     f: i64,
     g: i64,
     h: i64,
 }
 
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.f.cmp(&other.f)
+    } 
+}
+
+impl PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(other.f.cmp(&self.f))
+    }
+}
+
 fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
-    let mut open_list: Vec<(Node, Direction)> = vec![(start.to_node(&end, 0, -1), Direction::Right)];
-    let mut closed_list: HashSet<(i64, i64)> = HashSet::new();
+    let mut open_list: BinaryHeap<Node> = BinaryHeap::new();
+    open_list.push(start.to_node(&end, 0, -1, Direction::Right));
+    let mut closed_list: HashSet<Cartesian> = HashSet::new();
     while !open_list.is_empty() {
-        let curr = open_list.remove(0); 
-        let key = (curr.0.pos.x, curr.0.pos.y);
-        if closed_list.contains(&key) {
-            continue;
+        let curr = open_list.pop().unwrap(); 
+        closed_list.insert(curr.pos);
+        let pos = curr.pos;
+        if curr.h == 0 {
+            return curr.g;
         }
-        closed_list.insert(key);
-        let pos = curr.0.pos;
-        if curr.0.h == 0 {
-            return curr.0.g;
-        }
-        for (i, d) in curr.1.rotate().iter().enumerate() {
+        for (i, d) in curr.dir.rotate().iter().enumerate() {
             let dir = d.value(); 
             let lookahead = Cartesian{x: pos.x + dir.0, y: pos.y + dir.1};
 
@@ -109,7 +114,9 @@ fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
                 Some(entry) => {
                     match entry {
                         Entry::Empty => {
-                            open_list.push((lookahead.to_node(&end, i, curr.0.g), *d));
+                            if !closed_list.contains(&lookahead) {
+                                open_list.push(lookahead.to_node(&end, i, curr.g, *d));
+                            }
                         }
                         Entry::Wall => {}
                     }
@@ -117,31 +124,45 @@ fn astar(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
                 None => {}
             }
         }
-        open_list.sort_by(|a,b| a.0.f.cmp(&b.0.f));
     }
     return -1;
 }
 
-fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> (Vec<Cartesian>, HashMap<(i64, i64), (i64, Direction)>) {
-    let mut open_list: Vec<(Node, Direction, Vec<Cartesian>)> = vec![(start.to_node(&end, 0, -1), Direction::Right, vec![start])];
-    let mut closed_list: HashSet<(i64, i64)> = HashSet::new();
-    let mut eq_list: HashMap<(i64, i64), (i64, Direction)> = HashMap::new();
-    while !open_list.is_empty() {
-        let curr = open_list.remove(0); 
-        let key = (curr.0.pos.x, curr.0.pos.y);
-        let pos = curr.0.pos;
 
-        if closed_list.contains(&key) {
+fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> i64 {
+    let mut open_list: BinaryHeap<Node> = BinaryHeap::new();
+    open_list.push(start.to_node(&end, 0, -1, Direction::Right));
+    let mut lowest_cost: HashMap<Cartesian, i64> = HashMap::new();
+    let mut best_cost = i64::MAX;
+    let mut paths: HashMap<Node, Vec<(Node, i64)>> = HashMap::new();
+    paths.insert(*open_list.peek().unwrap(), vec![(*open_list.peek().unwrap(), 0)]);
+
+    while !open_list.is_empty() {
+        let curr = open_list.pop().unwrap(); 
+        let pos = curr.pos;
+
+        if lowest_cost.contains_key(&pos) && *lowest_cost.get(&pos).unwrap() < curr.g {
             continue;
         }
-
-        closed_list.insert(key);
+        lowest_cost.insert(pos, curr.g);
 
         if pos == end {
-            return (curr.2, eq_list);
+            if curr.g > best_cost {
+                break;
+            }
+            best_cost = curr.g;
+            let mut counter = 0;
+            for point in paths.get(&curr).unwrap() {
+               let paths_to_p = paths.get(&point.0).unwrap(); 
+               for pp in paths_to_p {
+                  if pp.1 + point.1 == best_cost {
+                        counter += 1;
+                    }
+               } 
+            }
+            println!("{:?}", counter);
         }
-
-        for (i, d) in curr.1.rotate().iter().enumerate() {
+        for (i, d) in curr.dir.rotate().iter().enumerate() {
             let dir = d.value(); 
             let lookahead = Cartesian{x: pos.x + dir.0, y: pos.y + dir.1};
 
@@ -149,10 +170,11 @@ fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> (Vec<Cartesia
                 Some(entry) => {
                     match entry {
                         Entry::Empty => {
-                            let mut path = curr.2.clone();
-                            path.push(lookahead);
-                            open_list.push((lookahead.to_node(&end, i, curr.0.g), *d, path));
-                            eq_list.insert(key, (curr.0.g, *d));
+                            let node = lookahead.to_node(&end, i, curr.g, *d);
+                            let mut prev_path = paths.get(&curr).unwrap().clone();
+                            prev_path.push((node, curr.g));
+                            paths.insert(node, prev_path.clone());
+                            open_list.push(node);
                         }
                         Entry::Wall => {}
                     }
@@ -160,9 +182,8 @@ fn astar2(start: Cartesian, end: Cartesian, grid: &Grid<Entry>) -> (Vec<Cartesia
                 None => {}
             }
         }
-        open_list.sort_by(|a,b| a.0.f.cmp(&b.0.f));
     }
-    return (vec![], HashMap::new());
+    return -1;
 }
 
 pub fn part1() -> std::io::Result<()> {
@@ -219,25 +240,21 @@ pub fn part2() -> std::io::Result<()> {
 
     let mut counter = 0;
     let length = astar(start, end, &grid);
-    let (path, _crap) = astar2(start, end, &grid);
 
-    for ((row, col), entry) in grid.indexed_iter() {
-        match entry {
-            Entry::Wall => {} 
-            Entry::Empty => {
+    for ((row, col) , entry) in grid.indexed_iter() {
+       match entry {
+           Entry::Wall => {}
+           Entry::Empty => {
                 let p = Cartesian{x: col as i64, y: row as i64};
                 let sp = astar(start, p, &grid);
-                let pe = astar(p, end, &grid);
-                let (_crap, cost) = astar2(p, end, &grid);
-                if path.contains(&p) {
-                    println!("{:?} {:?}", sp, pe);
-                    println!("{:?}", cost.get(&(p.x, p.y)));
+                let pe = astar(end, p, &grid);
+                if sp + pe == length || sp + pe - 1000 == length {
+                    counter += 1;
                 }
-                counter += if sp + pe == length {1} else {0};
-            }
-        }
-        
+           }
+       } 
     }
+
 
     println!("{:?}", counter);
 
